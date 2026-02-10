@@ -1,0 +1,14 @@
+gcp_project_id  = "your-gcp-project-id"
+gcp_region      = "us-central1"
+gcp_zone        = "us-central1-a"
+domain          = "yourdomain.com"
+app_image       = "ghcr.io/your-org/codechroniclenet:latest"
+machine_type    = "e2-micro"
+admin_ssh_cidrs = ["YOUR_IP/32"]
+
+# Provider credentials — set as env vars:
+#   export TF_VAR_cloudflare_api_token="..."
+#   export TF_VAR_neon_api_key="..."
+#
+# App secrets (django key, CF origin cert/key) are read from
+# GCP Secret Manager — see DEPLOY.md for one-time setup.
