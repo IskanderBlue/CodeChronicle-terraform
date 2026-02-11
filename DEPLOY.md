@@ -48,34 +48,35 @@ Before the first deploy, create these secrets once:
 ```bash
 DJANGO_KEY=$(python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())")
 
-gcloud secrets create django-secret-key --project=YOUR_PROJECT_ID
-echo -n "$DJANGO_KEY" | gcloud secrets versions add django-secret-key --data-file=- --project=YOUR_PROJECT_ID
+gcloud secrets create django_secret_key --project=YOUR_PROJECT_ID
+echo -n "$DJANGO_KEY" | gcloud secrets versions add django_secret_key --data-file=- --project=YOUR_PROJECT_ID
 
-gcloud secrets create cf-origin-cert --project=YOUR_PROJECT_ID
-gcloud secrets versions add cf-origin-cert --data-file=origin.pem --project=YOUR_PROJECT_ID
+gcloud secrets create cf_origin_cert --project=YOUR_PROJECT_ID
+gcloud secrets versions add cf_origin_cert --data-file=origin.pem --project=YOUR_PROJECT_ID
 
-gcloud secrets create cf-origin-key --project=YOUR_PROJECT_ID
-gcloud secrets versions add cf-origin-key --data-file=origin-key.pem --project=YOUR_PROJECT_ID
-
-gcloud secrets create cloudflare-api-token --project=YOUR_PROJECT_ID
-echo -n "YOUR_TOKEN" | gcloud secrets versions add cloudflare-api-token --data-file=- --project=YOUR_PROJECT_ID
-
-gcloud secrets create neon-api-key --project=YOUR_PROJECT_ID
-echo -n "YOUR_KEY" | gcloud secrets versions add neon-api-key --data-file=- --project=YOUR_PROJECT_ID
+gcloud secrets create cf_origin_key --project=YOUR_PROJECT_ID
+gcloud secrets versions add cf_origin_key --data-file=origin-key.pem --project=YOUR_PROJECT_ID
 ```
 
-All secrets are stored in GCP Secret Manager — nothing sensitive touches your local files.
+Set provider credentials as shell environment variables (not Secret Manager):
+
+```bash
+export TF_VAR_cloudflare_api_token="YOUR_TOKEN"
+export TF_VAR_neon_api_key="YOUR_KEY"
+```
+
+App/runtime secrets remain in GCP Secret Manager.
 
 ## Deploying
 
 1. Copy `envs/prod/prod.tfvars.example` to `envs/prod/prod.tfvars` and fill in non-sensitive values.
 
-2. Run via the wrapper script (fetches provider credentials from Secret Manager automatically):
+2. Run Terraform directly from `envs/prod`:
 
 ```bash
-./scripts/tf.sh init
-./scripts/tf.sh plan
-./scripts/tf.sh apply
+terraform -chdir=envs/prod init
+terraform -chdir=envs/prod plan -var-file=prod.tfvars
+terraform -chdir=envs/prod apply -var-file=prod.tfvars
 ```
 
 ### Important: COS host firewall behavior

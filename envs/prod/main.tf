@@ -1,15 +1,15 @@
 data "google_secret_manager_secret_version" "django_secret_key" {
-  secret  = "django-secret-key"
+  secret  = "django_secret_key"
   project = var.gcp_project_id
 }
 
 data "google_secret_manager_secret_version" "cf_origin_cert" {
-  secret  = "cf-origin-cert"
+  secret  = "cf_origin_cert"
   project = var.gcp_project_id
 }
 
 data "google_secret_manager_secret_version" "cf_origin_key" {
-  secret  = "cf-origin-key"
+  secret  = "cf_origin_key"
   project = var.gcp_project_id
 }
 
