@@ -48,6 +48,7 @@ module "compute" {
   subnet_name  = module.network.subnet_name
   secret_names = module.secrets.secret_names
   app_image    = var.app_image
+  domain       = var.domain
 }
 
 module "cloudflare" {

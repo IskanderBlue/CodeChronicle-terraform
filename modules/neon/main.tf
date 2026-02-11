@@ -1,6 +1,7 @@
 resource "neon_project" "this" {
-  name      = var.project_name
-  region_id = var.region
+  name                      = var.project_name
+  region_id                 = var.region
+  history_retention_seconds = 21600
 }
 
 resource "neon_role" "app" {

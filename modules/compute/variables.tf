@@ -33,3 +33,7 @@ variable "app_image" {
   type    = string
   default = ""
 }
+
+variable "domain" {
+  type = string
+}

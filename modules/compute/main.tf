@@ -10,6 +10,12 @@ resource "google_project_iam_member" "secret_accessor" {
   member  = "serviceAccount:${google_service_account.vm.email}"
 }
 
+resource "google_project_iam_member" "log_writer" {
+  project = var.project_id
+  role    = "roles/logging.logWriter"
+  member  = "serviceAccount:${google_service_account.vm.email}"
+}
+
 resource "google_compute_address" "static" {
   name    = "codechroniclenet-ip"
   project = var.project_id
@@ -49,6 +55,7 @@ resource "google_compute_instance" "app" {
       project_id   = var.project_id
       secret_names = var.secret_names
       app_image    = var.app_image
+      domain       = var.domain
     })
   }
 

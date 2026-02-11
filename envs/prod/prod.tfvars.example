@@ -1,8 +1,8 @@
-gcp_project_id  = "your-gcp-project-id"
+gcp_project_id  = "codechronicle-487104"
 gcp_region      = "us-central1"
 gcp_zone        = "us-central1-a"
-domain          = "yourdomain.com"
-app_image       = "ghcr.io/your-org/codechroniclenet:latest"
+domain          = "codechronicle.ca"
+app_image       = "ghcr.io/iskanderblue/codechroniclenet:latest"
 machine_type    = "e2-micro"
 admin_ssh_cidrs = ["YOUR_IP/32"]
 

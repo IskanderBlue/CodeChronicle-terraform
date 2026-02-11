@@ -13,8 +13,5 @@ resource "cloudflare_dns_record" "app" {
   ttl     = 1
 }
 
-resource "cloudflare_zone_setting" "tls" {
-  zone_id    = data.cloudflare_zone.this.id
-  setting_id = "ssl"
-  value      = "strict"
-}
+# TLS mode is set to Full (strict) manually in the Cloudflare dashboard.
+# The free plan does not support changing this via API.

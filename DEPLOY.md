@@ -78,6 +78,23 @@ All secrets are stored in GCP Secret Manager — nothing sensitive touches your 
 ./scripts/tf.sh apply
 ```
 
+### Important: COS host firewall behavior
+
+Some Container-Optimized OS boots can have a restrictive host firewall (`iptables` `INPUT DROP`).  
+This can cause Cloudflare `522` even when GCP VPC firewall rules are correct.
+
+The compute startup script now applies an idempotent host-level allow for HTTPS:
+
+```bash
+iptables -C INPUT -p tcp --dport 443 -j ACCEPT 2>/dev/null || iptables -I INPUT 1 -p tcp --dport 443 -j ACCEPT
+```
+
+If you update infrastructure and still see `522`, confirm this rule exists on the VM:
+
+```bash
+gcloud compute ssh codechroniclenet-vm --zone=us-central1-a --command="sudo iptables -S INPUT"
+```
+
 ## Post-Deploy
 
 1. SSH into the VM and run migrations:
@@ -118,7 +135,7 @@ No SSH or Docker needed. Migrations (`manage.py migrate`) can also be run this w
 The Docker image tag (default: `latest`) is set once by Terraform. To deploy a new version:
 
 ```bash
-gcloud compute ssh codechroniclenet-vm --zone=us-central1-a --command="cd /opt/codechroniclenet && docker compose pull && docker compose up -d"
+gcloud compute ssh codechroniclenet-vm --zone=us-central1-a --command="docker pull ghcr.io/iskanderblue/codechroniclenet:latest && docker rm -f codechroniclenet-web && docker run -d --name codechroniclenet-web --restart unless-stopped --env-file /home/codechroniclenet/.env --network host -v staticfiles:/app/staticfiles ghcr.io/iskanderblue/codechroniclenet:latest"
 ```
 
 No `terraform apply` needed unless you're changing infrastructure (VM size, firewall rules, secrets, etc.).
