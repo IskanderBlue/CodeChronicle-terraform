@@ -7,6 +7,7 @@ iptables -C INPUT -p tcp --dport 443 -j ACCEPT 2>/dev/null || iptables -I INPUT 
 systemctl start docker
 
 METADATA="http://metadata.google.internal/computeMetadata/v1"
+TOKEN=""
 
 for i in $(seq 1 10); do
   TOKEN=$(curl -sf -H "Metadata-Flavor: Google" "$METADATA/instance/service-accounts/default/token" | python3 -c "import sys,json; print(json.load(sys.stdin)['access_token'])" 2>/dev/null) && break
@@ -43,6 +44,9 @@ cd /home/codechroniclenet
 cat > nginx.conf <<'NGINX'
 events {}
 http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
     upstream django_app {
         server 127.0.0.1:8000;
     }
