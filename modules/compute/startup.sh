@@ -61,7 +61,17 @@ http {
         ssl_certificate /etc/nginx/certs/origin.pem;
         ssl_certificate_key /etc/nginx/certs/origin-key.pem;
         location /static/ {
+            types {
+                text/css css;
+                text/javascript js;
+                application/javascript mjs;
+                application/json json;
+                image/svg+xml svg;
+                font/woff woff;
+                font/woff2 woff2;
+            }
             alias /staticfiles/;
+            try_files $uri =404;
             access_log off;
             expires 30d;
         }
