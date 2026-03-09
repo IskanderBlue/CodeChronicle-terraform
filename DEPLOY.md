@@ -110,7 +110,7 @@ docker exec -it <container> python manage.py migrate
 docker exec -it <container> python manage.py load_maps
 ```
 
-3. Smoke test your health endpoint at `https://app.<domain>/`.
+3. Smoke test your health endpoint at `https://app.<domain>/api/health`.
 
 ## Loading Data from Your Laptop
 
@@ -133,10 +133,26 @@ No SSH or Docker needed. Migrations (`manage.py migrate`) can also be run this w
 
 ## Updating the App (without Terraform)
 
-The Docker image tag (default: `latest`) is set once by Terraform. To deploy a new version:
+Normal app deploys should now happen from `../CodeChronicle/.github/workflows/publish.yml`.
+
+The automated path is:
+
+1. Push to `main` in `../CodeChronicle`.
+2. GitHub Actions runs Django checks and tests.
+3. GitHub Actions pushes `ghcr.io/iskanderblue/codechroniclenet:latest` and `ghcr.io/iskanderblue/codechroniclenet:<git-sha>`.
+4. GitHub Actions authenticates to GCP with OIDC.
+5. GitHub Actions connects to `codechroniclenet-vm` through IAP and runs the VM-local deploy script.
+6. The new container starts, runs `migrate` and `collectstatic`, and serves traffic.
+7. GitHub Actions smoke-tests `https://app.<domain>/api/health`.
+
+No `terraform apply` is needed unless you're changing infrastructure (VM size, firewall rules, secrets, etc.).
+
+### Manual fallback
+
+If the workflow is unavailable, you can still trigger the same reset-less deploy path manually:
 
 ```bash
-gcloud compute ssh codechroniclenet-vm --zone=us-central1-a --command="docker pull ghcr.io/iskanderblue/codechroniclenet:latest && docker rm -f codechroniclenet-web && docker run -d --name codechroniclenet-web --restart unless-stopped --env-file /home/codechroniclenet/.env --network host -v staticfiles:/app/staticfiles ghcr.io/iskanderblue/codechroniclenet:latest"
+gcloud compute ssh codechroniclenet-vm --zone=us-central1-a --tunnel-through-iap --command="sudo bash /home/codechroniclenet/deploy-web.sh ghcr.io/iskanderblue/codechroniclenet:latest"
 ```
 
-No `terraform apply` needed unless you're changing infrastructure (VM size, firewall rules, secrets, etc.).
+To roll back manually, pass a previously published SHA tag instead of `latest`.

@@ -1,7 +1,8 @@
 #!/bin/bash
 set -euo pipefail
 
-# COS can boot with a restrictive host firewall (INPUT DROP). Ensure HTTPS ingress is allowed.
+# COS can boot with a restrictive host firewall (INPUT DROP). Ensure required ingress is allowed.
+iptables -C INPUT -p tcp --dport 22 -j ACCEPT 2>/dev/null || iptables -I INPUT 1 -p tcp --dport 22 -j ACCEPT
 iptables -C INPUT -p tcp --dport 443 -j ACCEPT 2>/dev/null || iptables -I INPUT 1 -p tcp --dport 443 -j ACCEPT
 
 systemctl start docker
@@ -40,6 +41,11 @@ fetch_secret "${secret_names["cf_origin_key"]}" > /home/codechroniclenet/origin-
 chmod 600 /home/codechroniclenet/origin-key.pem
 
 cd /home/codechroniclenet
+
+cat > deploy-web.sh <<'DEPLOY'
+${deploy_script}
+DEPLOY
+chmod 755 /home/codechroniclenet/deploy-web.sh
 
 cat > nginx.conf <<'NGINX'
 events {}
@@ -87,19 +93,11 @@ http {
 }
 NGINX
 
-docker pull ${app_image}
-
-docker rm -f codechroniclenet-web codechroniclenet-nginx 2>/dev/null || true
+docker rm -f codechroniclenet-nginx 2>/dev/null || true
 
 docker volume create staticfiles 2>/dev/null || true
 
-docker run -d \
-  --name codechroniclenet-web \
-  --restart unless-stopped \
-  --env-file .env \
-  --network host \
-  -v staticfiles:/app/staticfiles \
-  ${app_image}
+bash /home/codechroniclenet/deploy-web.sh ${app_image}
 
 docker run -d \
   --name codechroniclenet-nginx \

@@ -51,11 +51,16 @@ resource "google_compute_instance" "app" {
   }
 
   metadata = {
+    enable-oslogin         = "TRUE"
+    block-project-ssh-keys = "TRUE"
     startup-script = templatefile("${path.module}/startup.sh", {
       project_id   = var.project_id
       secret_names = var.secret_names
       app_image    = var.app_image
       domain       = var.domain
+      deploy_script = templatefile("${path.module}/deploy-web.sh.tftpl", {
+        app_image = var.app_image
+      })
     })
   }
 

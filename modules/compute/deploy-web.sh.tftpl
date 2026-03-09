@@ -1,0 +1,31 @@
+#!/bin/bash
+set -euo pipefail
+
+DEFAULT_IMAGE="${app_image}"
+
+if [ "$#" -gt 0 ]; then
+  IMAGE="$1"
+else
+  IMAGE=""
+fi
+
+if [ -z "$IMAGE" ]; then
+  IMAGE="$DEFAULT_IMAGE"
+fi
+
+if [ -z "$IMAGE" ]; then
+  echo "Usage: deploy-web.sh <image>"
+  exit 1
+fi
+
+docker pull "$IMAGE"
+docker volume create staticfiles >/dev/null
+docker rm -f codechroniclenet-web 2>/dev/null || true
+
+docker run -d \
+  --name codechroniclenet-web \
+  --restart unless-stopped \
+  --env-file /home/codechroniclenet/.env \
+  --network host \
+  -v staticfiles:/app/staticfiles \
+  "$IMAGE"

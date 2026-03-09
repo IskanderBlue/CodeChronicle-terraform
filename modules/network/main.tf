@@ -56,3 +56,17 @@ resource "google_compute_firewall" "allow-ssh-admin" {
   source_ranges = var.admin_ssh_cidrs
   target_tags   = ["codechroniclenet-web"]
 }
+
+resource "google_compute_firewall" "allow-ssh-iap" {
+  name    = "allow-ssh-iap"
+  project = var.project_id
+  network = google_compute_network.main.name
+
+  allow {
+    protocol = "tcp"
+    ports    = ["22"]
+  }
+
+  source_ranges = ["35.235.240.0/20"]
+  target_tags   = ["codechroniclenet-web"]
+}
