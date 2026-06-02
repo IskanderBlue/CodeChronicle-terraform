@@ -33,7 +33,7 @@ mkdir -p /home/codechroniclenet
 cat > /home/codechroniclenet/.env <<EOF
 GCP_PROJECT_ID=${project_id}
 DJANGO_SETTINGS_MODULE=code_chronicle.settings.production
-ALLOWED_HOSTS=${domain},app.${domain},localhost
+ALLOWED_HOSTS=${allowed_hosts}
 EOF
 
 fetch_secret "${secret_names["cf_origin_cert"]}" > /home/codechroniclenet/origin.pem

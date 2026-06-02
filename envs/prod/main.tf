@@ -49,11 +49,14 @@ module "compute" {
   secret_names = module.secrets.secret_names
   app_image    = var.app_image
   domain       = var.domain
+  subdomains   = var.subdomains
 }
 
 module "cloudflare" {
   source = "../../modules/cloudflare"
 
-  domain    = var.domain
-  public_ip = module.compute.public_ip
+  domain     = var.domain
+  public_ip  = module.compute.public_ip
+  account_id = var.cloudflare_account_id
+  subdomains = var.subdomains
 }

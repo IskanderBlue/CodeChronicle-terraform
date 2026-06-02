@@ -37,3 +37,9 @@ variable "app_image" {
 variable "domain" {
   type = string
 }
+
+variable "subdomains" {
+  type        = list(string)
+  default     = ["app", "www"]
+  description = "Host subdomains the app serves on; folded into Django ALLOWED_HOSTS."
+}

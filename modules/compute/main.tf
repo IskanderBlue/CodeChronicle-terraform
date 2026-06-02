@@ -1,3 +1,12 @@
+locals {
+  # apex + every subdomain + localhost, e.g. "codechronicle.ca,app.codechronicle.ca,www.codechronicle.ca,localhost"
+  allowed_hosts = join(",", concat(
+    [var.domain],
+    [for s in var.subdomains : "${s}.${var.domain}"],
+    ["localhost"],
+  ))
+}
+
 resource "google_service_account" "vm" {
   account_id   = "codechroniclenet-vm"
   display_name = "CodeChronicle VM"
@@ -54,10 +63,10 @@ resource "google_compute_instance" "app" {
     enable-oslogin         = "TRUE"
     block-project-ssh-keys = "TRUE"
     startup-script = templatefile("${path.module}/startup.sh", {
-      project_id   = var.project_id
-      secret_names = var.secret_names
-      app_image    = var.app_image
-      domain       = var.domain
+      project_id    = var.project_id
+      secret_names  = var.secret_names
+      app_image     = var.app_image
+      allowed_hosts = local.allowed_hosts
       deploy_script = templatefile("${path.module}/deploy-web.sh.tftpl", {
         app_image = var.app_image
       })

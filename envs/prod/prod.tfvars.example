@@ -6,6 +6,14 @@ app_image       = "ghcr.io/iskanderblue/codechroniclenet:latest"
 machine_type    = "e2-micro"
 admin_ssh_cidrs = ["YOUR_IP/32"]
 
+# Cloudflare account that owns the R2 bucket + asset Worker (not secret).
+# Dashboard → any domain → right sidebar, or the URL dash.cloudflare.com/<account-id>.
+cloudflare_account_id = "YOUR_CLOUDFLARE_ACCOUNT_ID"
+
+# Hosts the app serves on — drives DNS records, asset Worker routes, and
+# ALLOWED_HOSTS. Optional (defaults to ["app", "www"]); uncomment to override.
+# subdomains = ["app", "www"]
+
 # Provider credentials — set as env vars:
 #   export TF_VAR_cloudflare_api_token="..."
 #   export TF_VAR_neon_api_key="..."

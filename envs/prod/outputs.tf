@@ -14,3 +14,7 @@ output "neon_connection_string" {
 output "cloudflare_zone_id" {
   value = module.cloudflare.zone_id
 }
+
+output "asset_bucket_name" {
+  value = module.cloudflare.asset_bucket_name
+}

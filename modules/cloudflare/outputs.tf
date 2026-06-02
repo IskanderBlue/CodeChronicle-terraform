@@ -3,9 +3,23 @@ output "zone_id" {
 }
 
 output "domain_name" {
-  value = "${var.subdomain}.${var.domain}"
+  value       = "${var.primary_subdomain}.${var.domain}"
+  description = "Canonical host."
 }
 
-output "record_id" {
-  value = cloudflare_dns_record.app.id
+output "domain_names" {
+  value       = [for s in var.subdomains : "${s}.${var.domain}"]
+  description = "All served hosts."
+}
+
+output "record_ids" {
+  value = { for k, r in cloudflare_dns_record.app : k => r.id }
+}
+
+output "asset_bucket_name" {
+  value = cloudflare_r2_bucket.assets.name
+}
+
+output "asset_worker_routes" {
+  value = [for r in cloudflare_workers_route.assets : r.pattern]
 }
