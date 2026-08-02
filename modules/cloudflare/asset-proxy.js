@@ -1,4 +1,4 @@
-// Edge proxy: serves CCM-mirrored asset trees (documents/, amended/, laws/)
+// Edge proxy: serves CCM-mirrored asset trees (documents/, elaws/, amended/, laws/)
 // from R2 on the *app* origin, so the root-relative <img src="/laws/..."> paths
 // baked into stored version HTML resolve verbatim — no HTML rewrite, no origin
 // round-trip. Bound to R2 via the ASSETS binding (see workers_script in main.tf),

@@ -28,8 +28,8 @@ moved {
 # ---------------------------------------------------------------------------
 # Asset storage: R2 bucket + edge Worker that serves the CCM-mirrored asset
 # trees on the app origin. The Worker keeps the root-relative /documents/,
-# /amended/, /laws/ paths baked into stored version HTML resolving verbatim,
-# so no HTML rewrite is needed. See asset-proxy.js for the request handler.
+# /elaws/, /amended/, /laws/ paths baked into stored version HTML resolving
+# verbatim, so no HTML rewrite is needed. See asset-proxy.js for the handler.
 #
 # Manual prerequisites (not creatable on the free plan / not S3-key-minting):
 #   * The cloudflare_api_token used by this provider needs Workers Scripts:Edit

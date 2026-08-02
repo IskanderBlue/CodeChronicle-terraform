@@ -26,7 +26,7 @@ variable "account_id" {
 variable "asset_bucket_name" {
   type        = string
   default     = "codechronicle-assets-prod"
-  description = "R2 bucket holding the CCM-mirrored asset trees (documents/, amended/, laws/)."
+  description = "R2 bucket holding the CCM-mirrored asset trees (documents/, elaws/, amended/, laws/)."
 }
 
 variable "asset_bucket_location" {
@@ -37,6 +37,6 @@ variable "asset_bucket_location" {
 
 variable "asset_path_prefixes" {
   type        = list(string)
-  default     = ["documents", "amended", "laws"]
-  description = "URL path prefixes served from R2 at the edge. Must match MIRRORED_PREFIXES in the Django app."
+  default     = ["documents", "elaws", "amended", "laws"]
+  description = "URL path prefixes served from R2 at the edge. Must match MIRRORED_PREFIXES in the Django app. A prefix omitted here uploads to R2 fine and then 404s at the edge, because no route sends it to the Worker."
 }

@@ -246,8 +246,8 @@ No SSH or Docker needed. Migrations (`manage.py migrate`) can also be run this w
 
 ## Publishing Assets to R2
 
-The CCM-mirrored image trees (`documents/`, `amended/`, `laws/`) are served in
-production from the Cloudflare R2 bucket created by Terraform
+The CCM-mirrored image trees (`documents/`, `elaws/`, `amended/`, `laws/`) are
+served in production from the Cloudflare R2 bucket created by Terraform
 (`module.cloudflare.asset_bucket_name`, default `codechronicle-assets-prod`).
 Uploading is a laptop-run step — like `load_maps`, it reads local CCM build
 output and writes to the destination, with no VM or Docker dependency.
@@ -266,12 +266,22 @@ R2_SECRET_ACCESS_KEY=<r2-secret-access-key>
 # R2_ENDPOINT_URL is optional; defaults to https://<R2_ACCOUNT_ID>.r2.cloudflarestorage.com
 ```
 
-2. Upload from the CodeChronicle repo, pointing `--source` at the CCM outputs:
+2. Upload from the CodeChronicle repo:
 
 ```bash
 cd ../CodeChronicle
-python manage.py sync_images --backend r2 --source ../CodeChronicleMapping/data/outputs
+python manage.py sync_images --backend r2
 ```
+
+> ⚠️ Do not give one `--source` root. CCM keeps the trees in two places:
+> `laws/` is a build output, and `documents/` and `elaws/` are intermediates.
+> A single root publishes `laws/` only, and the command still reports success.
+> This is what left production with 96 of the 532 objects that it needs. The
+> default covers both roots. `--source` is repeatable if you must set it.
+
+The command prints one `Mirroring <prefix>/ from <root>` line for each prefix
+that it finds, and a warning for each prefix that no root holds. Read those
+lines. They are the only signal that a tree is absent.
 
 The sync is idempotent and content-addressed: reruns only upload changed objects
 (checked via `HEAD` + a stored `sha256` metadata field), and `laws/` paths
