@@ -29,3 +29,13 @@ docker run -d \
   --network host \
   -v staticfiles:/app/staticfiles \
   "$IMAGE"
+
+# Every deploy pulls a new SHA-tagged image, so no tag is ever reused and
+# nothing is ever implicitly replaced.  Without this the disk fills: 38 images
+# at ~720 MB reached 99% of a 26 GB disk in six weeks, and the pull that
+# followed failed with "no space left on device".
+#
+# This runs AFTER the new container is up, so a failed deploy still has the
+# previous image on disk to roll back to.  Two weeks keeps roughly the last
+# dozen deploys; anything older is still in GHCR and re-pulls on demand.
+docker image prune -af --filter "until=336h"
