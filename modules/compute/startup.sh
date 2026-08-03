@@ -51,6 +51,13 @@ cat > nginx.conf <<'NGINX'
 events {}
 http {
     include /etc/nginx/mime.types;
+    # Two types blocks in the SAME context add to one map, so this extends
+    # mime.types rather than replacing it.  A types block inside a location
+    # replaces the map instead, which is how every .png under /static/ came to
+    # be served as application/octet-stream, and why no social card drew.
+    types {
+        application/javascript mjs;
+    }
     default_type application/octet-stream;
 
     upstream django_app {
@@ -67,15 +74,6 @@ http {
         ssl_certificate /etc/nginx/certs/origin.pem;
         ssl_certificate_key /etc/nginx/certs/origin-key.pem;
         location /static/ {
-            types {
-                text/css css;
-                text/javascript js;
-                application/javascript mjs;
-                application/json json;
-                image/svg+xml svg;
-                font/woff woff;
-                font/woff2 woff2;
-            }
             alias /staticfiles/;
             try_files $uri =404;
             access_log off;
