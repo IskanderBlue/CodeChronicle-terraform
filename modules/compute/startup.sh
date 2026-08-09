@@ -98,7 +98,7 @@ docker volume create staticfiles 2>/dev/null || true
 bash /home/codechroniclenet/deploy-web.sh ${app_image}
 
 # Daily off-host encrypted backup of the irreproducible user data.
-# CodeChronicle: tasks/ao-security-hardening-rollout.md, B7.
+# CodeChronicle: tasks/complete/security-hardening-rollout.md, B7.
 #
 # A systemd timer, not cron: Container-Optimized OS ships no crontab for any
 # user, including root.  It also belongs to the machine rather than to whoever
