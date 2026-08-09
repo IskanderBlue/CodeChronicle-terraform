@@ -97,6 +97,47 @@ docker volume create staticfiles 2>/dev/null || true
 
 bash /home/codechroniclenet/deploy-web.sh ${app_image}
 
+# Daily off-host encrypted backup of the irreproducible user data.
+# CodeChronicle: tasks/ao-security-hardening-rollout.md, B7.
+#
+# A systemd timer, not cron: Container-Optimized OS ships no crontab for any
+# user, including root.  It also belongs to the machine rather than to whoever
+# last logged in, which a user crontab would not.
+#
+# This lives here because startup.sh is what rebuilds the VM.  Units written by
+# hand into /etc survive a reboot but not a rebuild, and a schedule lost in a
+# rebuild is silent — which is the exact failure the dead-man's switch
+# (BACKUP_HEALTHCHECK_URL) exists to catch.
+cat > /etc/systemd/system/cc-backup.service <<'UNIT'
+[Unit]
+Description=CodeChronicle off-host encrypted user-data backup
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/docker exec codechroniclenet-web python manage.py backup_userdata
+UNIT
+
+cat > /etc/systemd/system/cc-backup.timer <<'UNIT'
+[Unit]
+Description=Run the CodeChronicle backup daily
+
+[Timer]
+OnCalendar=*-*-* 07:00:00 UTC
+# Runs a schedule missed while the VM was down, at the next boot.  It does not
+# retry within the same day, so a deploy replacing the container while the
+# timer fires costs one backup.
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target
+UNIT
+
+systemctl daemon-reload
+systemctl enable --now cc-backup.timer
+
 docker run -d \
   --name codechroniclenet-nginx \
   --restart unless-stopped \
