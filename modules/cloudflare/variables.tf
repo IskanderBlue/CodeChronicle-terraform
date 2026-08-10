@@ -40,3 +40,9 @@ variable "asset_path_prefixes" {
   default     = ["documents", "elaws", "amended", "laws"]
   description = "URL path prefixes served from R2 at the edge. Must match MIRRORED_PREFIXES in the Django app. A prefix omitted here uploads to R2 fine and then 404s at the edge, because no route sends it to the Worker."
 }
+
+variable "asset_signing_key" {
+  type        = string
+  sensitive   = true
+  description = "Shared secret behind the asset tokens. The Worker refuses a request under a signed prefix (documents/) unless its token matches an HMAC-SHA256 of the R2 key under this secret. The Django app must hold the identical string as ASSET_SIGNING_KEY in the app_runtime_secrets bundle; if they differ, every page scan 403s. The signed prefixes are listed in asset-proxy.js and in the app's config/assets.py."
+}

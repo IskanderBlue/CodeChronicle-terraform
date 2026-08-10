@@ -59,4 +59,9 @@ module "cloudflare" {
   public_ip  = module.compute.public_ip
   account_id = var.cloudflare_account_id
   subdomains = var.subdomains
+  # Must equal ASSET_SIGNING_KEY in the app_runtime_secrets bundle. Changing it
+  # here alone makes every page scan 403; change both, in either order, and
+  # accept a short window where the scans refuse rather than a window where
+  # they are open.
+  asset_signing_key = var.asset_signing_key
 }

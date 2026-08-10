@@ -22,6 +22,12 @@ variable "cloudflare_account_id" {
   description = "Cloudflare account ID that owns the R2 bucket and Worker."
 }
 
+variable "asset_signing_key" {
+  type        = string
+  sensitive   = true
+  description = "Shared secret behind the asset tokens. Must equal ASSET_SIGNING_KEY in the app_runtime_secrets bundle, or every page scan 403s."
+}
+
 variable "neon_api_key" {
   type      = string
   sensitive = true

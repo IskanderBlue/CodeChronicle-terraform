@@ -51,11 +51,22 @@ resource "cloudflare_workers_script" "asset_proxy" {
   content     = file("${path.module}/asset-proxy.js")
   main_module = "asset-proxy.js"
 
-  bindings = [{
-    name        = "ASSETS"
-    type        = "r2_bucket"
-    bucket_name = cloudflare_r2_bucket.assets.name
-  }]
+  bindings = [
+    {
+      name        = "ASSETS"
+      type        = "r2_bucket"
+      bucket_name = cloudflare_r2_bucket.assets.name
+    },
+    # The asset-token secret. The app signs "documents/" URLs with the same
+    # string (ASSET_SIGNING_KEY in the app_runtime_secrets bundle); if the two
+    # differ, every page scan 403s. The Worker refuses those keys outright when
+    # this binding is absent, so a half-applied change fails closed.
+    {
+      name = "ASSET_SIGNING_KEY"
+      type = "secret_text"
+      text = var.asset_signing_key
+    },
+  ]
 
   observability = {
     enabled = true
