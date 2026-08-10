@@ -38,6 +38,56 @@ moved {
 #     are minted under R2 > Manage R2 API Tokens in the dashboard and stored as
 #     secrets — the serving Worker uses the binding below and needs no keys.
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# Edge caching for the read surfaces.
+#
+# Cloudflare does not cache HTML unless a rule says to, and these five views
+# are the whole cost of the site: nearly all traffic is declared crawlers, and
+# a provision permalink renders the matched provision *and its whole subtree*.
+# The origin already answers 304 from the corpus stamp (core/http_cache.py);
+# this stops the request reaching Django at all.
+#
+# Two rules the app and this file must agree on, or the tier gate leaks:
+#
+#   * A signed-in reader must never be served a stored copy.  The expression
+#     below bypasses the cache whenever a Django session cookie is present,
+#     and the app independently sends "private, no-store" on those responses,
+#     so either mechanism alone is sufficient.
+#   * "respect_origin" is deliberate.  The app decides how long a copy may
+#     live (core.http_cache.EDGE_MAX_AGE) because the app is what knows when
+#     the corpus changed.  Setting a TTL here would put that decision in two
+#     places that cannot see each other.
+#
+# The print routes are excluded: an anonymous request to one is a redirect to
+# the login page, which is about the reader, not the corpus.
+# ---------------------------------------------------------------------------
+resource "cloudflare_ruleset" "cache" {
+  zone_id = data.cloudflare_zone.this.id
+  name    = "Cache the read surfaces for anonymous readers"
+  kind    = "zone"
+  phase   = "http_request_cache_settings"
+
+  rules = [{
+    ref         = "cache_anonymous_read_surfaces"
+    description = "Store corpus pages at the edge unless the reader is signed in"
+    expression = join(" and ", [
+      "(starts_with(http.request.uri.path, \"/provision/\") or starts_with(http.request.uri.path, \"/regulation/\") or starts_with(http.request.uri.path, \"/edition/\") or starts_with(http.request.uri.path, \"/compare/\"))",
+      "not http.request.uri.path contains \"/print/\"",
+      "not http.request.headers[\"cookie\"][0] contains \"sessionid=\"",
+    ])
+    action = "set_cache_settings"
+    action_parameters = {
+      cache = true
+      edge_ttl = {
+        mode = "respect_origin"
+      }
+      browser_ttl = {
+        mode = "respect_origin"
+      }
+    }
+  }]
+}
+
 resource "cloudflare_r2_bucket" "assets" {
   account_id    = var.account_id
   name          = var.asset_bucket_name
