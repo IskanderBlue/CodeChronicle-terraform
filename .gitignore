@@ -1,6 +1,9 @@
 .terraform/
 *.tfstate
 *.tfstate.backup
+# Terraform also writes timestamped backups, which `*.tfstate.backup` misses.
+# A state file holds every secret in cleartext.
+*.tfstate.*.backup
 *.tfvars
 !*.tfvars.example
 .terraform.lock.hcl

@@ -93,6 +93,7 @@ Bash / Linux / macOS:
 ```bash
 export TF_VAR_cloudflare_api_token="YOUR_TOKEN"
 export TF_VAR_neon_api_key="YOUR_KEY"
+export TF_VAR_asset_signing_key=$(gcloud secrets versions access latest --secret=app_runtime_secrets | python -c "import sys,json;print(json.load(sys.stdin)['ASSET_SIGNING_KEY'])")
 ```
 
 PowerShell (Windows):
@@ -100,9 +101,61 @@ PowerShell (Windows):
 ```powershell
 $env:TF_VAR_cloudflare_api_token = "YOUR_TOKEN"
 $env:TF_VAR_neon_api_key = "YOUR_KEY"
+$env:TF_VAR_asset_signing_key = (gcloud secrets versions access latest --secret=app_runtime_secrets | ConvertFrom-Json).ASSET_SIGNING_KEY
 ```
 
+The asset-signing key is read, not typed. Django and the Cloudflare Worker must
+hold the same value. The `app_runtime_secrets` bundle is the one copy, and both
+sides read that copy. A second copy is a second thing to keep in step, and a
+mismatch makes every page scan answer 403.
+
 App/runtime secrets remain in GCP Secret Manager.
+
+### Database roles and grants
+
+Terraform creates three Neon roles, and it grants them nothing.
+
+| Role | Use |
+|---|---|
+| `codechroniclenet_app` | Owns every table. Runs `migrate`. Serves no request. |
+| `cc_app` | The role the application connects as. |
+| `cc_ro` | SELECT only, for a read-only session. |
+
+The application connects through the pooler host. The owner connects to the
+direct host, because the pooler runs PgBouncer in transaction mode.
+`modules/neon/outputs.tf` builds both strings, and
+`envs/prod/main.tf` writes them to `database_url` and `database_url_owner`.
+
+⚠️ A new project needs the grants as well. `envs/prod` speaks to the Neon API
+and runs no SQL, so a role it creates in an empty project has no privileges.
+The application starts, connects, and fails on the first query.
+
+`envs/prod-grants` applies the grants. It is a separate root module, and the
+ordinary deploy never runs it.
+
+```bash
+terraform -chdir=envs/prod-grants init
+terraform -chdir=envs/prod-grants apply
+```
+
+It reads the host, the database name and the role names from `envs/prod`'s
+state, so run it **after** the first `envs/prod` apply. It needs no variables
+and no credentials of its own.
+
+Run it in two conditions:
+
+1. After a rebuild from an empty Neon project. Apply it once.
+2. As a privilege audit, at any time. `plan` that reports no changes is the
+   statement that nobody has widened a role.
+
+⚠️ `terraform destroy` in `envs/prod-grants` revokes every privilege and stops
+the site.
+
+The grants stay in a separate directory for two reasons. A `plan` there opens
+a database connection, and the ordinary deploy must not need one. A variable
+that turns the grants on and off is also dangerous: an apply with the variable
+off destroys the grant resources, and Terraform destroys a grant with a
+`REVOKE`.
 
 ## Deploying
 

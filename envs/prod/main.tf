@@ -30,10 +30,15 @@ module "secrets" {
 
   project_id = var.gcp_project_id
   secrets = {
-    database_url      = module.neon.connection_uri
-    django_secret_key = data.google_secret_manager_secret_version.django_secret_key.secret_data
-    cf_origin_cert    = data.google_secret_manager_secret_version.cf_origin_cert.secret_data
-    cf_origin_key     = data.google_secret_manager_secret_version.cf_origin_key.secret_data
+    # Two DSNs, because the application and the migration connect as different
+    # roles.  `scripts/entrypoint.sh` names `database_url_owner` for the one
+    # `migrate` run and `database_url` for everything else; if these two ever
+    # carry the same role, that separation is gone and nothing reports it.
+    database_url       = module.neon.app_connection_uri
+    database_url_owner = module.neon.owner_connection_uri
+    django_secret_key  = data.google_secret_manager_secret_version.django_secret_key.secret_data
+    cf_origin_cert     = data.google_secret_manager_secret_version.cf_origin_cert.secret_data
+    cf_origin_key      = data.google_secret_manager_secret_version.cf_origin_key.secret_data
   }
 }
 
