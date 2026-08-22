@@ -117,6 +117,30 @@ After=docker.service
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/docker exec codechroniclenet-web python manage.py backup_userdata
+# The retention purge rides the backup's schedule rather than getting a timer
+# of its own.  CodeChronicle's Privacy Policy says a reading record is kept for
+# up to two years and then deleted; purge_reading_records does the deleting,
+# and until this line nothing called it, so the sentence was a promise with no
+# machinery.  Daily is more often than the promise needs, and that is the
+# point: the cheapest schedule is the one that already runs.
+#
+# --apply, because without it the command only reports, which is right for a
+# person and useless for a timer.  The retention period is the command's own
+# default (730 days), so the promise has one home.
+#
+# Order matters twice.  It runs AFTER the backup, so a delete always has a
+# fresh backup behind it, and systemd stops a Type=oneshot unit at the first
+# ExecStart that fails — a backup that did not work is not followed by a
+# delete.  And the backup pings BACKUP_HEALTHCHECK_URL from inside
+# backup_userdata, so that alarm is already sent before this line runs and a
+# purge failure can never redden it.  A backup alarm must mean the backup
+# failed; an alarm nobody trusts is worse than none.
+#
+# A purge failure does leave the UNIT failed, visible in `systemctl status
+# cc-backup`.  If that needs watching from off-host, give it its own
+# healthchecks.io check (the free tier allows 20; period 1 day, grace 6 h)
+# rather than folding it into the backup's.
+ExecStart=/usr/bin/docker exec codechroniclenet-web python manage.py purge_reading_records --apply
 UNIT
 
 cat > /etc/systemd/system/cc-backup.timer <<'UNIT'
